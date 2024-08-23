@@ -2,6 +2,7 @@
 const cors = require("cors");
 const express = require("express");
 const OpenAI =  require("openai");
+require("dotenv").config()
 
 const PORT = process.env.PORT || 3001
 const app = express();
@@ -9,8 +10,9 @@ app.use(cors());
 app.use(express.json());
 
 // Configure OpenAI
+console.log("prompt", process.env.MY_PROMPT)
 const client = new OpenAI({
-  apiKey: 'sk-proj-EAwdhbxQQJh6ov9XiVrAT3BlbkFJext50ovrgzJQlDK78H4k'
+  apiKey: process.env.OPENAI_API_KEY
 })
 
 app.post("/api", async (req, res) => {
@@ -35,7 +37,7 @@ app.post("/api", async (req, res) => {
             "content": [
               {
                 "type": "text",
-                "text": `Classify the answer as succinct or under-explained\n${currentQuestion}`
+                "text": `${process.env.MY_PROMPT}\n${currentQuestion}`
               }
             ]
           }
