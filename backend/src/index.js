@@ -10,15 +10,26 @@ app.use(cors());
 app.use(express.json());
 
 // Configure OpenAI
-console.log("prompt", process.env.MY_PROMPT)
+// console.log("prompt", process.env.MY_PROMPT)
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
 app.post("/api", async (req, res) => {
-    req.body;
     try {
       const { currentQuestion } = req.body;
+
+      // Check length
+      const questionLength = currentQuestion.length;
+      let prompt;
+
+      if (questionLength <= process.env.LENGTH_THRESHOLD) {
+        // console.log("Short");
+        prompt = process.env.MY_PROMPT_SUCC_UNDER;
+      } else {
+        // console.log("Long")
+        prompt = process.env.MY_PROMPT_COMP_OVER;
+      }
 
       const completion = await client.chat.completions.create({
         model: "gpt-3.5-turbo",
@@ -37,7 +48,7 @@ app.post("/api", async (req, res) => {
             "content": [
               {
                 "type": "text",
-                "text": `${process.env.MY_PROMPT}\n${currentQuestion}`
+                "text": `${prompt}\n${currentQuestion}`
               }
             ]
           }
