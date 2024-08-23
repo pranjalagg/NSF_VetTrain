@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 // Configure OpenAI
-// console.log("prompt", process.env.MY_PROMPT)
+// console.log("prompt", process.env.MY_PROMPT_COMP_OVER)
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
@@ -48,13 +48,13 @@ app.post("/api", async (req, res) => {
             "content": [
               {
                 "type": "text",
-                "text": `${prompt}\n${currentQuestion}`
+                "text": `${prompt}\n${currentQuestion}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`
               }
             ]
           }
         ],
       })
-      res.json({ response: completion.choices[0].message.content.trim() });
+      res.json(JSON.parse(completion.choices[0].message.content.trim()));
       console.log(completion.choices[0].message.content.trim());
     }
     catch (error) {
