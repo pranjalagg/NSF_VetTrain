@@ -34,9 +34,9 @@ function App() {
   // to check if the microphone is in listening mode or not
   const [isListening, setIsListening] = useState(false);
   // API response
-  const [apiResponse, setApiResponse] = useState({ Label: '', Reasoning: '' });
+  const [currentResponse, setCurrentResponse] = useState({ Label: '', Reasoning: '' });
   // const [currentCategory, setCurrentCategory] = useState('All Categories');
-
+  const [error, setError] = useState("")
   // functions for the whisper api
   const {
     recording,
@@ -136,6 +136,7 @@ function App() {
 
   
   const handleTextAreaChange = (event) => {
+    setError("")
     setTextAreaValue(event.target.value);
     updateCurrentAnswer(event.target.value);
     const textarea = textareaRef.current;
@@ -149,40 +150,37 @@ function App() {
   // useEffect to update the text area with answer based on current question index.
   useEffect(() => {
     const currentAnswer = currentQuestions[currentQuestionIndex]?.answer || '';
+    const currentLabel = currentQuestions[currentQuestionIndex]?.Label || '';
+    const currentReasoning = currentQuestions[currentQuestionIndex]?.Reasoning || '';
     setTextAreaValue(currentAnswer);
+    setCurrentResponse({Label: currentLabel, Reasoning: currentReasoning})
+    setError("")
   }, [currentQuestionIndex, currentQuestions]);
 
   
   // Submit the answer to the API and update the state with the API response
   const handleSubmit = async () => {
+    if(currentQuestion.answer === ""){
+      setError("Please fill a response.")
+      return
+    }
     console.log(`Submitting answer for question ${currentQuestion.id}: ${currentQuestion.answer}`);
-    const response = await fetch('http://localhost:3001/api', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ currentQuestion: currentQuestion.answer }),
-    })
-    const data = await response.json();
-    console.log("response: ", data);
-    // Extracting values
-    const { reason, ans } = data;
-
-    // const response = await new Promise(resolve => setTimeout(() => resolve({
-    //   Label: 'Succinct',
-    //   Reasoning: 'The veteran\'s response is to the point and concise, fully answering the interviewer\'s questions. The veteran\'s use of polite expressions like "I appreciate you taking the time" and "really appreciate it" indicates respectful and polite language, while their cautious language (e.g., "I\'m trying to continue that," "I think what I\'m now looking for") contributes to a well-rounded and clear explanation. The veteran also avoids political content.'
-    // }), 5000));
+    const response = await new Promise(resolve => setTimeout(() => resolve({
+      Label: 'Succinct',
+      Reasoning: 'The veteran\'s response is to the point and concise, fully answering the interviewer\'s questions. The veteran\'s use of polite expressions like "I appreciate you taking the time" and "really appreciate it" indicates respectful and polite language, while their cautious language (e.g., "I\'m trying to continue that," "I think what I\'m now looking for") contributes to a well-rounded and clear explanation. The veteran also avoids political content.'
+    }), 5000));
 
     // Update the state with the API response
-    setApiResponse({ Label: ans, Reasoning: reason });
-    const updatedQuestions = allQuestions.map(question => {
-      if (question.id === currentQuestionIndex) { // Assuming currentQuestionId is the ID of the question being answered
-        return { ...question, Label: ans, Reasoning: reason };
+    setCurrentResponse(response);
+    const updatedQuestions = currentQuestions.map((question) => {
+      if (question.id === currentQuestion.id) { 
+        // Assuming currentQuestionId is the ID of the question being answered
+        return { ...question, Label: response.Label, Reasoning: response.Reasoning };
       }
       return question;
     });
-  
-    setAllQuestions(updatedQuestions);
+
+    setCurrentQuestions(updatedQuestions);
   };
 
   // Reset the answer in the text area
@@ -243,12 +241,17 @@ function App() {
           <button onClick={handleSubmit} className="submit-button">Submit</button>
         </div>
         {/* Displaying the API response */}
-        {apiResponse.Label && (
+        {currentResponse.Label && (
           <div className="api-response">
-            <div className="answer-api-response">Label: {apiResponse.Label}</div>
-            <div className="answer-api-response">Reasoning: {apiResponse.Reasoning}</div>
+            <div className="answer-api-response">Label: {currentResponse.Label}</div>
+            <div className="answer-api-response">Reasoning: {currentResponse.Reasoning}</div>
           </div>
         )}
+        {
+          error!=="" && (
+            <div className="global-error">{error}</div>
+          )
+        }
       </div>
     </div>
   );
