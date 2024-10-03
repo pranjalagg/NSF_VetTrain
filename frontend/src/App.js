@@ -156,16 +156,28 @@ function App() {
   // Submit the answer to the API and update the state with the API response
   const handleSubmit = async () => {
     console.log(`Submitting answer for question ${currentQuestion.id}: ${currentQuestion.answer}`);
-    const response = await new Promise(resolve => setTimeout(() => resolve({
-      Label: 'Succinct',
-      Reasoning: 'The veteran\'s response is to the point and concise, fully answering the interviewer\'s questions. The veteran\'s use of polite expressions like "I appreciate you taking the time" and "really appreciate it" indicates respectful and polite language, while their cautious language (e.g., "I\'m trying to continue that," "I think what I\'m now looking for") contributes to a well-rounded and clear explanation. The veteran also avoids political content.'
-    }), 5000));
+    const response = await fetch('http://localhost:3001/api', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentQuestion: currentQuestion.answer }),
+    })
+    const data = await response.json();
+    console.log("response: ", data);
+    // Extracting values
+    const { reason, ans } = data;
+
+    // const response = await new Promise(resolve => setTimeout(() => resolve({
+    //   Label: 'Succinct',
+    //   Reasoning: 'The veteran\'s response is to the point and concise, fully answering the interviewer\'s questions. The veteran\'s use of polite expressions like "I appreciate you taking the time" and "really appreciate it" indicates respectful and polite language, while their cautious language (e.g., "I\'m trying to continue that," "I think what I\'m now looking for") contributes to a well-rounded and clear explanation. The veteran also avoids political content.'
+    // }), 5000));
 
     // Update the state with the API response
-    setApiResponse(response);
+    setApiResponse({ Label: ans, Reasoning: reason });
     const updatedQuestions = allQuestions.map(question => {
       if (question.id === currentQuestionIndex) { // Assuming currentQuestionId is the ID of the question being answered
-        return { ...question, Label: apiResponse.Label, Reasoning: apiResponse.Reasoning };
+        return { ...question, Label: ans, Reasoning: reason };
       }
       return question;
     });
