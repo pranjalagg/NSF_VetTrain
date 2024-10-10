@@ -156,12 +156,19 @@ function App() {
   // Submit the answer to the API and update the state with the API response
   const handleSubmit = async () => {
     console.log(`Submitting answer for question ${currentQuestion.id}: ${currentQuestion.answer}`);
+    console.log(JSON.stringify({
+      currentQuestion: currentQuestion.question,
+      currentAnswer: currentQuestion.answer
+    }));
     const response = await fetch('http://localhost:3001/api', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ currentQuestion: currentQuestion.answer }),
+      body: JSON.stringify({
+        currentQuestion: currentQuestion.question,
+        currentAnswer: currentQuestion.answer
+      }),
     })
     const data = await response.json();
     console.log("response: ", data);
