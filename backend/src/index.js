@@ -11,9 +11,6 @@ app.use(express.json());
 
 // Configure OpenAI
 // console.log("prompt", process.env.MY_PROMPT_COMP_OVER)
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
 
 app.post("/api", async (req, res) => {
     try {
@@ -52,28 +49,40 @@ app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });
 
+// const callGemini = (modelName, prompt, question, answer) => {
+//   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+//   const model = genAI.getGenerativeModel({ model: modelName });
+//   const promptGem = `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`;
+//   const result = model.generateContent(promptGem);
+//   console.log("result", result);
+//   return result;
+// }
+
 const callGPT = (modelname, prompt, question, answer) => {
-return client.chat.completions.create({
-  model: modelname,
-  messages: [
-    {
-      "role": "system",
-      "content": [
-        {
-          "type": "text",
-          "text": "You are a helpful assistant"
-        }
-      ]
-    },
-    {
-      "role": "user",
-      "content": [
-        {
-          "type": "text",
-          "text": `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`
-        }
-      ]
-    }
-  ],
-})
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  })
+  return client.chat.completions.create({
+    model: modelname,
+    messages: [
+      {
+        "role": "system",
+        "content": [
+          {
+            "type": "text",
+            "text": "You are a helpful assistant"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": [
+          {
+            "type": "text",
+            "text": `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`
+          }
+        ]
+      }
+    ],
+  })
 }
