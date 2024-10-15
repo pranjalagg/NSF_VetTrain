@@ -114,7 +114,7 @@ const callGPT = (modelname, prompt, question, answer) => {
         "content": [
           {
             "type": "text",
-            "text": "You are a helpful assistant"
+            "text": "You are a text classifier"
           }
         ]
       },
