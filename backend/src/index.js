@@ -46,7 +46,7 @@ app.post("/api", async (req, res) => {
       console.log(responseJson);
     }
     catch (error) {
-      console.error("Error calling ChatGPT: ", error)
+      console.error("Error calling Language model: ", error)
       res.status(500).json({ error: "An error occured while processing your request" })
     }
 });
@@ -57,9 +57,24 @@ app.listen(PORT, () => {
 
 const callGemini = (modelName, prompt, question, answer) => {
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: modelName });
-  const promptGem = `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`;
-  return model.generateContent(promptGem);
+  const model = genAI.getGenerativeModel({ model: modelName, systemInstructions: "You are a helpful assistant" });
+
+  chat = model.startChat({
+    history: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: prompt
+          }
+        ]
+      },
+    ]
+  });
+  return chat.sendMessage(`\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`);
+
+  // const promptGem = `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`;
+  // return model.generateContent(promptGem);
 }
 
 const callGPT = (modelname, prompt, question, answer) => {
