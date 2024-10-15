@@ -184,17 +184,17 @@ function App() {
     // Extracting values
     const { reason, ans } = data;
 
-    // const response = await new Promise(resolve => setTimeout(() => resolve({
-    //   Label: 'Succinct',
-    //   Reasoning: 'The veteran\'s response is to the point and concise, fully answering the interviewer\'s questions. The veteran\'s use of polite expressions like "I appreciate you taking the time" and "really appreciate it" indicates respectful and polite language, while their cautious language (e.g., "I\'m trying to continue that," "I think what I\'m now looking for") contributes to a well-rounded and clear explanation. The veteran also avoids political content.'
-    // }), 5000));
+    const modelResponse = {
+      Label: ans,
+      Reasoning: reason
+    };
 
     // Update the state with the API response
-    setCurrentResponse(response);
+    setCurrentResponse(modelResponse);
     const updatedQuestions = currentQuestions.map((question) => {
       if (question.id === currentQuestion.id) { 
         // Assuming currentQuestionId is the ID of the question being answered
-        return { ...question, Label: response.Label, Reasoning: response.Reasoning };
+        return { ...question, Label: modelResponse.Label, Reasoning: modelResponse.Reasoning };
       }
       return question;
     });
