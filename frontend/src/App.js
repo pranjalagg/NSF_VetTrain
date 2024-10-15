@@ -103,13 +103,11 @@ function App() {
 
   // once the answer is updated, update the current question answer in the state
   const updateCurrentAnswer = (newAnswer) => {
-    const updatedQuestions = currentQuestions.map((item, index) => {
-      if (index === currentQuestionIndex) {
-        return { ...item, answer: newAnswer };
-      }
-      return item;
-    });
-    setCurrentQuestions(updatedQuestions);
+    setCurrentQuestions(prevQuestions => 
+      prevQuestions.map((question, index) => 
+        index === currentQuestionIndex ? { ...question, answer: newAnswer } : question
+      )
+    );
   };
 
   // useEffect to start and stop the recording based on the isListening state
@@ -124,9 +122,12 @@ function App() {
   }, [isListening]);
 
   useEffect(() => {
-    // `transcript` is the variable holding the transcription text
-    // and `setTextAreaValue` is the method to update the text area content
-    setTextAreaValue(prevValue => `${prevValue} ${transcript.text}`);
+    // Update both the textAreaValue and the current question's answer
+    setTextAreaValue(prevValue => {
+      const newValue = `${prevValue} ${transcript.text}`.trim();
+      updateCurrentAnswer(newValue);
+      return newValue;
+    });
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
@@ -134,17 +135,18 @@ function App() {
     }
   }, [transcript.text]);
 
-  
+
   const handleTextAreaChange = (event) => {
-    setError("")
-    setTextAreaValue(event.target.value);
-    updateCurrentAnswer(event.target.value);
+    setError("");
+    const newValue = event.target.value;
+    setTextAreaValue(newValue);
+    updateCurrentAnswer(newValue);
     const textarea = textareaRef.current;
-  if (textarea) {
-    textarea.style.height = 'auto';
-    // Set height based on scroll height
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  }
+    if (textarea) {
+      textarea.style.height = 'auto';
+      // Set height based on scroll height
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
   };
 
   // useEffect to update the text area with answer based on current question index.
