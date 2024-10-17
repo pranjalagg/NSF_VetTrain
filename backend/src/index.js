@@ -15,40 +15,65 @@ app.use(express.json());
 const pattern = /{[^}]*}/
 
 app.post("/api", async (req, res) => {
-    try {
-      const { currentQuestion, currentAnswer } = req.body;
-      console.log("currentQuestion", currentQuestion);
-      
-      let completion;
-      let responseJson;
+  try {
+    const { currentQuestion, currentAnswer } = req.body;
+    console.log("currentQuestion", currentQuestion);
+    
+    let completion;
+    let responseJson;
+    let retries = 0;
+    const maxRetries = 2;
 
-      // Check length
-      const answerLength = currentAnswer.length;
-      let prompt;
+    // Check length
+    const answerLength = currentAnswer.length;
+    let prompt;
 
-      if (answerLength <= process.env.LENGTH_THRESHOLD) {
-        // console.log("Short");
-        prompt = process.env.MY_PROMPT_SUCC_UNDER;
-        model = process.env.GEMINI_MODEL_NAME;
+    while (retries <= maxRetries) {
+      try {
+        if (answerLength >= process.env.LENGTH_THRESHOLD) {
+          prompt = process.env.MY_PROMPT_SUCC_UNDER;
+          model = process.env.GEMINI_MODEL_NAME;
+          
+          completion = await callGemini(model, prompt, currentQuestion, currentAnswer);
+          match = completion.response.text().match(pattern);
+          responseJson = JSON.parse(match[0]);
+        } else {
+          prompt = process.env.MY_PROMPT_COMP_OVER;
+          model = process.env.GPT_MODEL_NAME;
+          console.log("-".repeat(50));
+          console.log("PROMPT");
+          console.log("-".repeat(50));
+          
+          completion = await callGPT(model, prompt, currentQuestion, currentAnswer);
+          match = completion.choices[0].message.content.trim().match(pattern);
+          responseJson = JSON.parse(match[0]);
+        }
         
-        completion = await callGemini(model, prompt, currentQuestion, currentAnswer);
-        match = completion.response.text().match(pattern)
-        responseJson=JSON.parse(match);
-
-      } else {
-        prompt = process.env.MY_PROMPT_COMP_OVER;
-        model = process.env.GPT_MODEL_NAME;
-        // modelCall = callGPT
-        completion = await callGPT(model, prompt, currentQuestion, currentAnswer);
-        responseJson=JSON.parse(completion.choices[0].message.content.trim());
+        // Validate the 'ans' field in the response
+        const validAnswers = ["Over-explained", "Under-explained", "Succinct", "Comprehensive"];
+        if (!validAnswers.includes(responseJson.ans)) {
+          throw new Error("Invalid 'ans' value in the response");
+        }
+        
+        break;
       }
-      res.json(responseJson)
-      console.log(responseJson);
+      catch (error) {
+        console.error(`Attempt ${retries + 1} failed: ${error.message}`);
+        retries++;
+        
+        if (retries > maxRetries) {
+          throw new Error("Failed to get a valid response after multiple attempts");
+        }
+      }
     }
-    catch (error) {
-      console.error("Error calling Language model: ", error)
-      res.status(500).json({ error: "An error occured while processing your request" })
-    }
+
+    res.json(responseJson);
+    console.log("Response:", responseJson);
+  }
+  catch (error) {
+    console.error("Error processing request: ", error);
+    res.status(500).json({ error: "An error occurred while processing your request" });
+  }
 });
 
 app.listen(PORT, () => {
@@ -89,7 +114,7 @@ const callGPT = (modelname, prompt, question, answer) => {
         "content": [
           {
             "type": "text",
-            "text": "You are a helpful assistant"
+            "text": "You are a text classifier"
           }
         ]
       },
@@ -98,7 +123,7 @@ const callGPT = (modelname, prompt, question, answer) => {
         "content": [
           {
             "type": "text",
-            "text": `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}\n\nThink about it step by step and give the reason and the final answer in a json format like {{"reason": "<reason>", "ans": "<answer>"}}.`
+            "text": `${prompt}\nInterviewer: ${question}\nVeteran: ${answer}`
           }
         ]
       }
