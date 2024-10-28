@@ -30,7 +30,7 @@ app.post("/api", async (req, res) => {
 
     while (retries <= maxRetries) {
       try {
-        if (answerLength >= process.env.LENGTH_THRESHOLD) {
+        if (answerLength <= process.env.LENGTH_THRESHOLD) {
           prompt = process.env.MY_PROMPT_SUCC_UNDER;
           model = process.env.GEMINI_MODEL_NAME;
           
